@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المسابقة الثقافية - UNEM ISCAE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0A5C36;
+            --secondary: #F2A900;
+            --bg: #f4f7f6;
+            --text: #333;
+            --danger: #dc3545;
+            --success: #28a745;
+            --light-green: #eef5f1;
+            --fiqh-color: #0056b3;
+            --info: #17a2b8;
+        }
+
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        
+        body {
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary); color: white; text-align: center;
+            padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 2.5rem; font-weight: 900; }
+        header h3 { margin: 5px 0 0 0; color: var(--secondary); font-weight: 600; }
+
+        .container {
+            flex: 1; width: 95%; max-width: 1200px; margin: 30px auto;
+            background: white; border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 40px; text-align: center;
+        }
+
+        .screen { display: none; animation: fadeIn 0.5s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .input-group { margin: 20px 0; }
+        .input-group label { font-size: 1.2rem; font-weight: bold; display: block; margin-bottom: 10px; }
+        input[type="number"], input[type="text"], select {
+            width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ddd;
+            border-radius: 8px; font-size: 1.1rem; text-align: center; outline: none; transition: 0.3s;
+        }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        button {
+            background-color: var(--primary); color: white; border: none;
+            padding: 15px 30px; font-size: 1.2rem; font-weight: bold;
+            border-radius: 8px; cursor: pointer; transition: 0.3s; margin: 10px;
+        }
+        button:hover { filter: brightness(0.9); transform: scale(1.05); }
+        button.btn-secondary { background-color: var(--secondary); color: #000; }
+        button.btn-danger { background-color: var(--danger); }
+        button.btn-success { background-color: var(--success); }
+        button.btn-fiqh { background-color: var(--fiqh-color); }
+        button.btn-info { background-color: var(--info); }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .round-title { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin-bottom: 10px; }
+        .turn-info {
+            font-size: 1.5rem; font-weight: bold; padding: 20px; background: var(--light-green);
+            border-radius: 10px; border: 2px solid var(--primary); color: var(--text); margin-bottom: 30px;
+        }
+        .turn-info span.team-name { color: var(--primary); font-size: 2.2rem; font-weight: 900; }
+
+        .category-selection { display: flex; justify-content: center; gap: 30px; margin-top: 30px; flex-wrap: wrap;}
+        .cat-box {
+            background: white; border: 3px solid var(--primary); border-radius: 15px;
+            padding: 40px; cursor: pointer; transition: 0.3s; flex: 1; min-width: 300px; max-width: 400px;
+        }
+        .cat-box:hover { background: var(--light-green); transform: translateY(-10px); }
+        .cat-box h2 { color: var(--primary); margin: 0; font-size: 2rem; }
+
+        .grid-container { display: none; margin-top: 20px; }
+        .grid-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .grid-title { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        
+        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; }
+        .q-btn {
+            background: var(--primary); color: white; border: none; padding: 20px 0;
+            font-size: 1.5rem; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 0;
+        }
+        .q-btn:hover { background: var(--secondary); color: #000; transform: scale(1.1); }
+        .q-btn.disabled { background: #d6d6d6 !important; color: #888; cursor: not-allowed; transform: none; }
+        .q-btn.fiqh-btn { background: var(--fiqh-color); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: white; padding: 40px; border-radius: 15px; width: 90%; max-width: 800px; text-align: center;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .timer { font-size: 4rem; font-weight: 900; color: var(--danger); margin: 20px 0; }
+        .question-text { font-size: 2.2rem; margin: 30px 0; line-height: 1.6; color: var(--text); font-weight: bold;}
+        .answer-text { font-size: 2rem; color: var(--success); font-weight: bold; margin: 30px 0; display: none; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border: 1px solid #ddd; font-size: 1.3rem; }
+        th { background: var(--primary); color: white; font-size: 1.3rem;}
+        .eliminated { background-color: #ffe6e6; color: var(--danger); font-weight: bold; }
+        .qualified { background-color: #e6ffe6; color: var(--success); font-weight: bold; }
+        
+        .rules-list { text-align: right; font-size: 1.2rem; line-height: 1.8; margin-bottom: 20px; }
+        .rules-list li { margin-bottom: 10px; }
+        .rules-list strong { color: var(--primary); }
+
+    </style>
+</head>
+<body>
+
+    <!-- ملف صوت التصفيق 👏 -->
+    <audio id="applause-sound" src="https://actions.google.com/sounds/v1/crowds/light_applause.ogg" preload="auto"></audio>
+
+    <header>
+        <h1>اليوم الثقافي لـ ISCAE</h1>
+        <h3>الاتحاد الوطني لطلبة موريتانيا (UNEM)</h3>
+    </header>
+
+    <div class="container">
+        
+        <!-- إعداد المسابقة -->
+        <div id="setup-step1" class="screen active">
+            <h2>مرحباً بكم في منصة المسابقة الثقافية</h2>
+            
+            <button class="btn-info" style="margin-bottom: 30px; font-size: 1.5rem;" onclick="document.getElementById('rules-modal').style.display='flex'">
+                📖 عرض طريقة المسابقة
+            </button>
+
+            <div style="background: var(--light-green); padding: 20px; border-radius: 10px; border: 2px solid var(--primary); max-width: 600px; margin: 0 auto;">
+                <h3>إعدادات الانطلاق</h3>
+                <div class="input-group">
+                    <label>عدد الفرق المشاركة الكلي:</label>
+                    <input type="number" id="total-teams" min="3" value="6">
+                </div>
+                <div class="input-group">
+                    <label>عدد الفرق التي ستقصى في المرحلة الأولى:</label>
+                    <input type="number" id="eliminated-r1" min="1" value="2">
+                </div>
+                <button onclick="goToStep2()">التالي: إدخال أسماء الفرق</button>
+            </div>
+        </div>
+
+        <!-- إدخال الأسماء -->
+        <div id="setup-step2" class="screen">
+            <h2>أسماء الفرق المشاركة</h2>
+            <div id="team-names-container"></div><br>
+            <button class="btn-secondary" onclick="showScreen('setup-step1')">السابق</button>
+            <button onclick="goToLottery()">التالي: إجراء القرعة</button>
+        </div>
+
+        <!-- القرعة -->
+        <div id="lottery-screen" class="screen">
+            <h2>القرعة وتحديد الأدوار</h2>
+            <p>اضغط لسحب القرعة وتحديد ترتيب أدوار الفرق إلكترونياً</p>
+            <button onclick="runLottery()">إجراء القرعة</button>
+            <div id="lottery-results" style="margin-top:30px; font-size: 1.8rem; font-weight: bold; line-height: 2;"></div><br>
+            <button id="start-game-btn" class="btn-success" style="display:none;" onclick="startGame()">بدء المسابقة</button>
+        </div>
+
+        <!-- اللوحة الرئيسية -->
+        <div id="game-screen" class="screen">
+            <div id="round-title" class="round-title">المرحلة الأولى</div>
+            <div class="turn-info">
+                الدور الآن على: <span id="current-team-name" class="team-name">---</span><br>
+                <span style="font-size: 1.2rem;">السؤال رقم <span id="current-q-count" style="color:var(--danger); font-weight:bold;">1</span> من 5</span>
+            </div>
+
+            <div id="category-selection" class="category-selection">
+                <div class="cat-box" onclick="showGrid('islamic')"><h2>📚 ثقافة إسلامية</h2></div>
+                <div class="cat-box" onclick="showGrid('general')"><h2>🌍 ثقافة عامة</h2></div>
+            </div>
+
+            <div id="grid-container" class="grid-container">
+                <div class="grid-header">
+                    <h2 id="grid-title" class="grid-title">القسم</h2>
+                    <button class="btn-secondary" onclick="backToCategories()">العودة للأقسام</button>
+                </div>
+                <div class="grid" id="numbers-grid"></div>
+            </div>
+        </div>
+
+        <!-- النتائج -->
+        <div id="results-screen" class="screen">
+            <h2 id="results-title" style="font-size: 2.5rem; color: var(--primary);">نتائج المرحلة</h2>
+            
+            <p style="color: var(--danger); font-size: 1.1rem; font-weight: bold;">
+                📌 في حال التعادل، الترتيب يُحسب بالرصيد السابق، ثم كسر التعادل (فقه)، ثم قرعة الحسم.
+            </p>
+            
+            <button class="btn-fiqh" style="margin-bottom: 10px;" onclick="openTieBreakerMode()">⚖️ كسر تعادل (أسئلة الأخضري)</button>
+            <button class="btn-danger" style="margin-bottom: 10px;" onclick="openLotteryModal()">🎲 قرعة الحسم للمتأهل</button>
+
+            <div id="results-table-container"></div><br>
+            <!-- زر الانتقال برمجياً يتغير مسماه ووظيفته حسب المرحلة -->
+            <button id="next-round-btn" class="btn-success" style="display:none;"></button>
+        </div>
+
+        <!-- شاشة كسر التعادل (الفقه) -->
+        <div id="tie-breaker-screen" class="screen">
+            <h2 class="round-title" style="color: var(--fiqh-color);">مرحلة كسر التعادل (الفقه ومختصر الأخضري)</h2>
+            <div style="margin: 30px 0; padding: 20px; background: #fff; border-radius: 10px; border: 2px solid var(--fiqh-color);">
+                <label style="font-size: 1.5rem; font-weight: bold;">اختر الفريق المتعادل ليوجه له السؤال:</label><br><br>
+                <select id="tie-breaker-team-select" onchange="updateTieBreakerTeamUI()" style="font-size:1.5rem;"></select>
+                <div id="tie-breaker-limit-msg" style="color:var(--danger); font-size:1.5rem; margin-top:15px; font-weight:bold; display:none;">
+                    ⛔ هذا الفريق أكمل 5 أسئلة، لا يمكنه الإجابة على المزيد.
+                </div>
+            </div>
+            
+            <div class="grid-container" id="fiqh-grid-wrapper" style="display: block;">
+                <h2 style="color: var(--fiqh-color);">أسئلة الفقه:</h2>
+                <div class="grid" id="fiqh-grid"></div>
+            </div><br>
+            <button class="btn-secondary" style="margin-top: 30px;" onclick="showResults()">العودة للنتائج وتحديث الترتيب</button>
+        </div>
+
+    </div>
+
+    <!-- نافذة القوانين وطريقة المسابقة -->
+    <div class="modal-overlay" id="rules-modal">
+        <div class="modal">
+            <h2 style="color: var(--primary); font-size: 2rem; margin-top: 0;">📖 طريقة وقواعد المسابقة</h2>
+            <ul class="rules-list">
+                <li><strong>1. الإعداد والقرعة:</strong> يتم تحديد عدد الفرق المشاركة، ثم إدخال الأسماء، ويقوم النظام بإجراء قرعة لتحديد أدوار الفرق.</li>
+                <li><strong>2. الأسئلة العشوائية:</strong> في كل مرة تُفتح فيها المسابقة من جديد يتم خلط (Shuffle) جميع الأسئلة لتكون الأرقام مخفية عشوائياً.</li>
+                <li><strong>3. عدد الأسئلة:</strong> لكل فريق 5 أسئلة في المرحلة الواحدة، مدة كل سؤال 60 ثانية.</li>
+                <li><strong>4. التنقيط العادي:</strong> الإجابة الصحيحة = 3 نقاط، والخاطئة = 0 نقطة.</li>
+                <li><strong>5. التعادل (النظام الآلي):</strong> إذا تساوى فريقان في النقاط الحالية، يقوم النظام آلياً بالفصل بينهما باستخدام رصيدهم التراكمي السابق.</li>
+                <li><strong>6. كسر التعادل (الفقه والأخضري):</strong> إذا استمر التعادل، يحق للجنة استخدام زر "كسر التعادل". النظام سيعرض <u>فقط الفرق المتعادلة</u> في القائمة. لكل فريق 5 أسئلة كحد أقصى. (صحيح = +1، خاطئ = -1، تخطي = 0).</li>
+                <li><strong>7. قرعة الحسم:</strong> إن استمر التعادل بعد الفقه، يتم اللجوء لزر "قرعة الحسم"، ويقوم النظام باختيار الفائز إلكترونياً بين <u>الفرق المتعادلة فقط</u>.</li>
+            </ul>
+            <button class="btn-secondary" style="font-size: 1.2rem; width: 100%;" onclick="document.getElementById('rules-modal').style.display='none'">فهمت، إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة السؤال -->
+    <div class="modal-overlay" id="question-modal">
+        <div class="modal">
+            <h3 id="modal-category" style="color: var(--primary); font-size: 1.5rem; margin-top:0;"></h3>
+            <div class="timer" id="timer">60</div>
+            <div class="question-text" id="question-text">نص السؤال</div>
+            <button id="show-answer-btn" class="btn-secondary" style="font-size: 1.5rem; padding: 15px 40px;" onclick="showAnswer()">إظهار الإجابة</button>
+            <div class="answer-text" id="answer-text">نص الإجابة</div>
+            
+            <div id="normal-scoring-buttons" style="display: none; margin-top: 30px;">
+                <button class="btn-success" onclick="scoreAnswer(3)">إجابة صحيحة (3 نقاط) 👏</button>
+                <button class="btn-danger" onclick="scoreAnswer(0)">إجابة خاطئة (0 نقطة)</button>
+            </div>
+
+            <div id="fiqh-scoring-buttons" style="display: none; margin-top: 30px;">
+                <button class="btn-success" onclick="scoreTieBreaker(1)">إجابة صحيحة (+1) 👏</button>
+                <button class="btn-danger" onclick="scoreTieBreaker(-1)">إجابة خاطئة (-1)</button>
+                <button class="btn-secondary" onclick="scoreTieBreaker(0)">تخطي (0)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة القرعة للحسم -->
+    <div class="modal-overlay" id="lottery-modal">
+        <div class="modal" style="max-width: 500px;">
+            <h2 style="color:var(--danger);">🎲 قرعة الحسم للمتأهل</h2>
+            <p>اختر من بين الفرق المتعادلة لنجري قرعة التأهل:</p>
+            <div id="lottery-teams-checkboxes" style="text-align: right; margin: 20px 0;"></div>
+            <button class="btn-success" id="lottery-execute-btn" onclick="executeFinalLottery()">اسحب الفائز الآن</button>
+            <button class="btn-secondary" onclick="document.getElementById('lottery-modal').style.display='none'">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        // --- دالة خلط الأسئلة (Shuffle) لضمان تغيير الأسئلة في كل مسابقة ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // --- البيانات والأسئلة ---
+        const islamicData =[
+            { q: "ما هي السورة التي تسمى 'قلب القرآن'؟", a: "سورة يس" },
+            { q: "ما هي السورة التي تسمى 'عروس القرآن'؟", a: "سورة الرحمن" },
+            { q: "ما هي أطول سورة في القرآن الكريم؟", a: "سورة البقرة" },
+            { q: "ما هي أقصر سورة في القرآن الكريم؟", a: "سورة الكوثر" },
+            { q: "ما هي السورة التي لا تبدأ بالبسملة؟", a: "سورة التوبة" },
+            { q: "من هو أول من أسلم من الرجال؟", a: "أبو بكر الصديق رضي الله عنه" },
+            { q: "من هي أول من أسلمت من النساء؟", a: "خديجة بنت خويلد رضي الله عنها" },
+            { q: "من هو أول من أسلم من الصبيان؟", a: "علي بن أبي طالب رضي الله عنه" },
+            { q: "كم عدد سور القرآن الكريم؟", a: "114 سورة" },
+            { q: "ما هي السورة التي تعدل ثلث القرآن؟", a: "سورة الإخلاص" },
+            { q: "من هو الصحابي الجليل الذي لُقب بـ 'سيف الله المسلول'؟", a: "خالد بن الوليد رضي الله عنه" },
+            { q: "من هو النبي الذي التقمه الحوت؟", a: "يونس عليه السلام" },
+            { q: "ما هو الكتاب الذي أُنزل على النبي داود عليه السلام؟", a: "الزبور" },
+            { q: "في أي سنة هجرية وقعت غزوة بدر الكبرى؟", a: "في السنة الثانية للهجرة" },
+            { q: "من هو الصحابي الذي أشار على النبي بحفر الخندق؟", a: "سلمان الفارسي رضي الله عنه" },
+            { q: "ما هي السورة التي تسمى سورة بني إسرائيل؟", a: "سورة الإسراء" },
+            { q: "من هو النبي الذي أُلقي في النار فكانت برداً وسلاماً عليه؟", a: "إبراهيم عليه السلام" },
+            { q: "ما هي الغزوة التي جُرح فيها النبي ﷺ وكُسرت رَباعيته؟", a: "غزوة أحد" },
+            { q: "من هو مؤذن الرسول ﷺ؟", a: "بلال بن رباح رضي الله عنه" },
+            { q: "كم عدد أركان الإسلام؟", a: "خمسة أركان" },
+            { q: "ما هو الركن الثاني من أركان الإيمان؟", a: "الإيمان بالملائكة" },
+            { q: "من هو الصحابي الذي تستحي منه الملائكة؟", a: "عثمان بن عفان رضي الله عنه" },
+            { q: "كم عدد الخلفاء الراشدين؟", a: "أربعة" },
+            { q: "من هي أم المؤمنين التي لُقبت بـ 'الصديقة بنت الصديق'؟", a: "عائشة بنت أبي بكر رضي الله عنهما" },
+            { q: "ما هو المسجد الذي يعد القبلة الأولى للمسلمين؟", a: "المسجد الأقصى" },
+            { q: "في أي شهر هجري فُرض صيام رمضان؟", a: "شهر شعبان من السنة الثانية للهجرة" },
+            { q: "من هو كافل مريم عليها السلام؟", a: "زكريا عليه السلام" },
+            { q: "ما هو اسم ناقة الرسول ﷺ؟", a: "القصواء" },
+            { q: "كم مرة ذُكر اسم 'محمد' في القرآن الكريم؟", a: "4 مرات" },
+            { q: "ما هي السورة التي حث النبي ﷺ النساء على تعلمها؟", a: "سورة النور" },
+            { q: "من هو الصحابي الذي اهتز لموته عرش الرحمن؟", a: "سعد بن معاذ رضي الله عنه" },
+            { q: "من هو غسيل الملائكة؟", a: "حنظلة بن أبي عامر رضي الله عنه" },
+            { q: "ما هي الصلاة التي لا ركوع فيها ولا سجود؟", a: "صلاة الجنازة" },
+            { q: "كم عدد آيات سورة الفاتحة؟", a: "7 آيات" },
+            { q: "من هي المرأة التي أوحى الله إليها في القرآن؟", a: "أم موسى عليه السلام" },
+            { q: "من هو النبي الذي أتاه الله شطر الحسن؟", a: "يوسف عليه السلام" },
+            { q: "ما هي المعركة التي تسمى 'فتح الفتوح'؟", a: "معركة نهاوند" },
+            { q: "من هو الصحابي الملقب بـ 'أمين هذه الأمة'؟", a: "أبو عبيدة بن الجراح رضي الله عنه" },
+            { q: "ما هو الشهر الهجري الذي يأتي بعد رجب؟", a: "شعبان" },
+            { q: "كم عدد السجدات في القرآن الكريم؟", a: "15 سجدة" },
+            { q: "من هو النبي الذي كلمه الله؟", a: "موسى عليه السلام" },
+            { q: "من هو مؤسس المذهب المالكي؟", a: "الإمام مالك بن أنس" },
+            { q: "أين ولد النبي محمد ﷺ؟", a: "في مكة المكرمة" },
+            { q: "ما هي السورة التي ذُكرت فيها البسملة مرتين؟", a: "سورة النمل" },
+            { q: "من هو حبر الأمة وترجمان القرآن؟", a: "عبد الله بن عباس رضي الله عنهما" },
+            { q: "ما هي أول آية نزلت من القرآن الكريم؟", a: "اقرأ باسم ربك الذي خلق" },
+            { q: "ما هي أطول آية في القرآن الكريم؟", a: "آية الدَّيْن في سورة البقرة" },
+            { q: "من الذي جمع القرآن في مصحف واحد لأول مرة؟", a: "أبو بكر الصديق رضي الله عنه" },
+            { q: "من هو الملك الموكل بالنفخ في الصور يوم القيامة؟", a: "إسرافيل عليه السلام" },
+            { q: "ما هو اسم خازن الجنة؟", a: "رضوان" }
+        ];
+
+        const generalData =[
+            { q: "ما هي عاصمة موريتانيا؟", a: "نواكشوط" },
+            { q: "ما هو أطول نهر في العالم؟", a: "نهر النيل" },
+            { q: "ما هي أكبر قارة في العالم من حيث المساحة؟", a: "قارة آسيا" },
+            { q: "ما هي أصغر قارة في العالم؟", a: "قارة أستراليا" },
+            { q: "من هو المكتشف الحقيقي لأمريكا عام 1492م؟", a: "كريستوفر كولومبوس" },
+            { q: "أي دولة عربية تُعرف بـ 'بلد المليون ونصف المليون شهيد'؟", a: "الجزائر" },
+            { q: "ما هي عاصمة اليابان؟", a: "طوكيو" },
+            { q: "ما هو الغاز الذي يمتصه النبات في عملية البناء الضوئي؟", a: "ثاني أكسيد الكربون" },
+            { q: "كم عدد كواكب المجموعة الشمسية؟", a: "8 كواكب" },
+            { q: "من هو مخترع المصباح الكهربائي؟", a: "توماس إديسون" },
+            { q: "ما هي الدولة التي استضافت كأس العالم لكرة القدم عام 2022؟", a: "دولة قطر" },
+            { q: "من هو الشاعر الذي لُقب بـ 'أمير الشعراء'؟", a: "أحمد شوقي" },
+            { q: "ما هو المحيط الأكبر في العالم؟", a: "المحيط الهادئ" },
+            { q: "في أي قارة تقع دولة البرازيل؟", a: "أمريكا الجنوبية" },
+            { q: "ما هي اللغة الرسمية في الأرجنتين؟", a: "اللغة الإسبانية" },
+            { q: "ما هو المعدن السائل في درجة الحرارة العادية؟", a: "الزئبق" },
+            { q: "ما هي أعلى قمة جبلية في العالم؟", a: "قمة إيفرست" },
+            { q: "من هو مؤلف كتاب 'العبقريات'؟", a: "عباس محمود العقاد" },
+            { q: "كم عدد الأسنان في فم الإنسان البالغ؟", a: "32 سناً" },
+            { q: "ما هو الحيوان البري الأسرع في العالم؟", a: "الفهد (الشيتا)" },
+            { q: "ما هي عملة المملكة المتحدة (بريطانيا)؟", a: "الجنيه الإسترليني" },
+            { q: "أين يقع مقر منظمة الأمم المتحدة؟", a: "نيويورك (الولايات المتحدة)" },
+            { q: "ما هو العنصر الكيميائي الذي يرمز له بالحرف O؟", a: "الأكسجين" },
+            { q: "متى استقلت موريتانيا عن الاستعمار الفرنسي؟", a: "28 نوفمبر 1960" },
+            { q: "ما هي المدينة الموريتانية التي تُلقب بمدينة السبعة أبواب؟", a: "مدينة ولاته التاريخية" },
+            { q: "من هو مؤسس الدولة المرابطية؟", a: "عبد الله بن ياسين" },
+            { q: "ما هو الطائر الذي لا يطير ويعتبر الأكبر حجماً؟", a: "النعامة" },
+            { q: "ما هي أكثر دولة في العالم سكاناً (حتى 2023)؟", a: "الهند" },
+            { q: "من رسم لوحة الموناليزا الشهيرة؟", a: "ليوناردو دا فينشي" },
+            { q: "ما هي الدولة التي يمر بها خط الاستواء وسميت باسمه؟", a: "الإكوادور" },
+            { q: "ما هو العضو الذي يضخ الدم في جسم الإنسان؟", a: "القلب" },
+            { q: "من هو أول إنسان صعد إلى الفضاء؟", a: "يوري غاغارين" },
+            { q: "ما هي عاصمة المملكة العربية السعودية؟", a: "الرياض" },
+            { q: "كم عدد قارات العالم؟", a: "7 قارات" },
+            { q: "ما هو أقرب كوكب إلى الشمس؟", a: "عطارد" },
+            { q: "من هو مكتشف الجاذبية الأرضية؟", a: "إسحاق نيوتن" },
+            { q: "ما هي المادة التي تشكل 71% من سطح الأرض؟", a: "الماء" },
+            { q: "ما هو الحيوان الذي يُسمى 'سفينة الصحراء'؟", a: "الجمل" },
+            { q: "أين يقع تمثال الحرية؟", a: "نيويورك" },
+            { q: "ما هو البحر الذي يفصل بين قارتي أفريقيا وأوروبا؟", a: "البحر الأبيض المتوسط" },
+            { q: "ما هو اللون الذي يرمز للسلام؟", a: "اللون الأبيض" },
+            { q: "ما هو أطول حيوان بري؟", a: "الزرافة" },
+            { q: "من هو أول من وضع النقاط على الحروف في اللغة العربية؟", a: "أبو الأسود الدؤلي" },
+            { q: "ما هي الدولة الأوروبية التي تشبه شكل الحذاء في الخريطة؟", a: "إيطاليا" },
+            { q: "من هو بطل كأس العالم لكرة القدم 2018؟", a: "فرنسا" },
+            { q: "ما هي عاصمة فلسطين؟", a: "القدس" },
+            { q: "ما هي وحدة قياس التيار الكهربائي؟", a: "الأمبير" },
+            { q: "كم عدد العظام في جسم الإنسان البالغ؟", a: "206 عظمات" },
+            { q: "ما هو أشهر المعالم التاريخية في مصر القديمة؟", a: "الأهرامات" },
+            { q: "ما هو أصغر كوكب في المجموعة الشمسية؟", a: "عطارد" }
+        ];
+
+        const fiqhData =[
+            {q: "من هو مؤلف مختصر الأخضري؟", a: "عبد الرحمن بن محمد الصغير الأخضري"},
+            {q: "ما هو أول ما يجب على المكلف حسب الأخضري؟", a: "تصحيح إيمانه، ثم معرفة ما يصلح به فرض عينه"},
+            {q: "كم عدد فرائض الوضوء في المذهب المالكي؟", a: "سبعة"},
+            {q: "ما هو حكم الدلك في الوضوء عند المالكية؟", a: "فرض"},
+            {q: "ما هي الموالاة (الفور) وما حكمها في الوضوء؟", a: "فعل الوضوء في فور واحد، وهي فرض مع الذكر والقدرة"},
+            {q: "كم عدد فرائض التيمم؟", a: "خمسة (النية، الصعيد الطاهر، مسح الوجه، اليدين للكوعين، الضربة الأولى)"},
+            {q: "ما هي أوقات الضرورة لصلاتي المغرب والعشاء؟", a: "من بعد صلاتهما إلى الفجر"},
+            {q: "كم عدد فرائض الصلاة المذكورة عند الأخضري؟", a: "أربع عشرة فريضة"},
+            {q: "ما حكم قراءة الفاتحة في الصلاة؟", a: "فرض في كل ركعة على الإمام والفذ"},
+            {q: "كم عدد سنن الصلاة المؤكدة؟", a: "ثمانية"},
+            {q: "متى يسجد المصلي السجود القبلي؟", a: "عند النقصان من السنن المؤكدة (سنتين فأكثر)"},
+            {q: "متى يسجد المصلي السجود البعدي؟", a: "عند الزيادة في الصلاة نسياناً"},
+            {q: "ما حكم من ترك سجدة من فرائض الصلاة وتذكرها بعد السلام وطال الزمن؟", a: "بطلت صلاته ويجب عليه إعادتها"},
+            {q: "ما هو الرعاف في فقه الصلاة؟", a: "خروج الدم من الأنف"},
+            {q: "ما حكم من شك في عدد الركعات (مثلاً 3 أم 4)؟", a: "يبني على اليقين وهو الأقل (3) ويسجد للسهو"},
+            {q: "ما هي شروط الإمامة للصلاة؟", a: "الذكورة، العقل، البلوغ، العلم بفقه الصلاة، السلامة من اللحن"},
+            {q: "ما حكم صلاة الجماعة؟", a: "سنة مؤكدة، وقيل فرض كفاية"},
+            {q: "هل يجوز التيمم مع وجود الماء؟", a: "نعم، للمريض ومن خاف العطش أو الهلاك"},
+            {q: "ما حكم صلاة الجمعة وعلى من تجب؟", a: "فرض عين على كل مكلف ذكر حر مقيم بمكانها"},
+            {q: "ما هي شروط وجوب الصيام؟", a: "البلوغ، العقل، القدرة، الإقامة، والخلو من الموانع"},
+            {q: "ما هي أركان الصيام الأساسية؟", a: "النية، والإمساك عن المفطرات من الفجر للغروب"},
+            {q: "ما حكم من أفطر متعمداً في نهار رمضان بدون عذر؟", a: "عليه القضاء والكفارة الكبرى"},
+            {q: "من فرائض الغسل تخليل الشعر، فهل يجب نقض الضفائر؟", a: "لا يجب نقضها إن وصل الماء للبشرة"},
+            {q: "ما هي نواقض الوضوء (الأحداث)؟", a: "البول، الغائط، الريح، المذي، الودي، والمني إن خرج بلذة معتادة"},
+            {q: "ما هو الصعيد الطاهر الذي يتيمم به؟", a: "كل ما صعد على وجه الأرض من جنسها (تراب، حجر، رمل)"},
+            {q: "ما حكم المضمضة والاستنشاق في الوضوء؟", a: "سنة من سنن الوضوء"},
+            {q: "ما هي الأعذار المبيحة لترك الجمعة والجماعة؟", a: "المرض الشديد، الخوف من ظالم، المطر الوحل الشديد"},
+            {q: "ما حكم الضحك بصوت (القهقهة) داخل الصلاة؟", a: "تبطل الصلاة باتفاق"},
+            {q: "ما هو أقل مدة للحيض وأكثرها عند المالكية؟", a: "أقله دفعة (لحظة)، وأكثره 15 يوماً للمبتدأة"},
+            {q: "ما هي الصلوات التي تقصر في السفر؟", a: "الصلوات الرباعية (الظهر، العصر، العشاء) تصلى ركعتين"}
+        ];
+
+        // خلط الأسئلة عند بداية التطبيق لضمان العشوائية التامة
+        shuffleArray(islamicData);
+        shuffleArray(generalData);
+        shuffleArray(fiqhData);
+
+        const islamicQs = islamicData.map((item, index) => ({ id: index + 1, q: item.q, a: item.a, used: false }));
+        const generalQs = generalData.map((item, index) => ({ id: index + 1, q: item.q, a: item.a, used: false }));
+        const fiqhQs = fiqhData.map((item, index) => ({ id: index + 1, q: item.q, a: item.a, used: false }));
+
+        // --- حالة اللعبة ---
+        let teams =[];
+        let numElimR1 = 0;
+        let currentRound = 1; 
+        let activeTeams =[];
+        let currentTeamIdx = 0;
+        let timerInterval;
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function goToStep2() {
+            let count = parseInt(document.getElementById('total-teams').value);
+            numElimR1 = parseInt(document.getElementById('eliminated-r1').value);
+            if(count < 3 || numElimR1 >= count) return alert('خطأ: تأكد من منطقية الأرقام المدخلة.');
+            
+            let html = '';
+            for(let i=1; i<=count; i++) html += `<div class="input-group"><input type="text" id="t-name-${i}" placeholder="اسم الفريق ${i}" required></div>`;
+            document.getElementById('team-names-container').innerHTML = html;
+            showScreen('setup-step2');
+        }
+
+        function goToLottery() {
+            let count = parseInt(document.getElementById('total-teams').value);
+            teams =[];
+            for(let i=1; i<=count; i++) {
+                teams.push({
+                    name: document.getElementById(`t-name-${i}`).value.trim() || `فريق ${i}`,
+                    score: 0, previousScore: 0, tieScore: 0, tieQs: 0, lotteryWin: 0, qCount: 0, eliminated: false
+                });
+            }
+            showScreen('lottery-screen');
+        }
+
+        function runLottery() {
+            teams.sort(() => Math.random() - 0.5); 
+            activeTeams = teams.filter(t => !t.eliminated);
+            let html = "ترتيب اللعب:<br>";
+            activeTeams.forEach((t, i) => html += `<span style="color:var(--primary);">${i+1}.</span> ${t.name}<br>`);
+            document.getElementById('lottery-results').innerHTML = html;
+            document.getElementById('start-game-btn').style.display = 'inline-block';
+        }
+
+        function startGame() {
+            activeTeams.forEach(t => { t.qCount = 0; t.score = 0; t.tieScore = 0; t.tieQs = 0; t.lotteryWin = 0; });
+            currentTeamIdx = 0;
+            updateHeader();
+            backToCategories(); 
+            showScreen('game-screen');
+        }
+
+        function updateHeader() {
+            document.getElementById('current-team-name').innerText = activeTeams[currentTeamIdx].name;
+            document.getElementById('current-q-count').innerText = activeTeams[currentTeamIdx].qCount + 1;
+            document.getElementById('round-title').innerText = currentRound === 1 ? "المرحلة الأولى" : (currentRound === 2 ? "المرحلة الثانية" : "النهائي");
+        }
+
+        function backToCategories() {
+            document.getElementById('grid-container').style.display = 'none';
+            document.getElementById('category-selection').style.display = 'flex';
+        }
+
+        function showGrid(cat) {
+            document.getElementById('category-selection').style.display = 'none';
+            document.getElementById('grid-container').style.display = 'block';
+            document.getElementById('grid-title').innerText = cat === 'islamic' ? '📚 ثقافة إسلامية' : '🌍 ثقافة عامة';
+            
+            let grid = document.getElementById('numbers-grid');
+            grid.innerHTML = '';
+            let qs = cat === 'islamic' ? islamicQs : generalQs;
+            qs.forEach(q => {
+                let btn = document.createElement('button');
+                btn.className = `q-btn ${q.used ? 'disabled' : ''}`;
+                btn.innerText = q.id;
+                btn.onclick = () => { if(!q.used) openQuestion(q, false); };
+                grid.appendChild(btn);
+            });
+        }
+
+        function openQuestion(qObj, isFiqh) {
+            document.getElementById('modal-category').innerText = isFiqh ? '⚖️ سؤال فقه - الأخضري' : 'سؤال المسابقة';
+            document.getElementById('question-text').innerText = qObj.q;
+            document.getElementById('answer-text').innerText = qObj.a;
+            
+            document.getElementById('show-answer-btn').style.display = 'inline-block';
+            document.getElementById('answer-text').style.display = 'none';
+            document.getElementById('normal-scoring-buttons').style.display = 'none';
+            document.getElementById('fiqh-scoring-buttons').style.display = 'none';
+            document.getElementById('timer').innerText = '60';
+            
+            document.getElementById('show-answer-btn').onclick = () => {
+                clearInterval(timerInterval);
+                document.getElementById('show-answer-btn').style.display = 'none';
+                document.getElementById('answer-text').style.display = 'block';
+                if(isFiqh) document.getElementById('fiqh-scoring-buttons').style.display = 'block';
+                else document.getElementById('normal-scoring-buttons').style.display = 'block';
+            };
+
+            document.getElementById('question-modal').style.display = 'flex';
+            qObj.used = true; // Mark as used
+
+            let time = 60;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                time--; document.getElementById('timer').innerText = time;
+                if(time <= 0) document.getElementById('show-answer-btn').click();
+            }, 1000);
+        }
+
+        function scoreAnswer(pts) {
+            if(pts === 3) playAudio(); // تشغيل الصوت فقط للإجابة الصحيحة
+            
+            activeTeams[currentTeamIdx].score += pts;
+            activeTeams[currentTeamIdx].qCount++;
+            document.getElementById('question-modal').style.display = 'none';
+
+            if(activeTeams.every(t => t.qCount === 5)) showResults();
+            else {
+                currentTeamIdx = (currentTeamIdx + 1) % activeTeams.length;
+                updateHeader(); backToCategories();
+            }
+        }
+
+        function showResults() {
+            activeTeams.forEach(t => t.eliminated = false);
+
+            activeTeams.sort((a, b) => {
+                if(b.score !== a.score) return b.score - a.score;
+                if(b.previousScore !== a.previousScore) return b.previousScore - a.previousScore;
+                if(b.tieScore !== a.tieScore) return b.tieScore - a.tieScore;
+                return b.lotteryWin - a.lotteryWin;
+            });
+
+            showScreen('results-screen');
+            document.getElementById('results-title').innerText = `نتائج المرحلة ${currentRound}`;
+            
+            let toEliminate = currentRound === 1 ? numElimR1 : (currentRound === 2 ? activeTeams.length - 3 : 0);
+            let nxtBtn = document.getElementById('next-round-btn');
+            
+            if(currentRound === 3) {
+                nxtBtn.style.display = 'inline-block';
+                nxtBtn.innerText = "🔄 إنهاء وبدء مسابقة جديدة بأسئلة عشوائية";
+                nxtBtn.onclick = () => location.reload(); // إعادة تحميل الصفحة لخلط الأسئلة وبدء مسابقة جديدة
+            } else {
+                nxtBtn.style.display = 'inline-block';
+                nxtBtn.innerText = currentRound === 1 ? "الذهاب للمرحلة الثانية" : "الذهاب للمرحلة النهائية";
+                nxtBtn.onclick = startNextRound;
+            }
+
+            let hasFiqh = activeTeams.some(t => t.tieScore !== 0 || t.tieQs > 0);
+            let hasLottery = activeTeams.some(t => t.lotteryWin > 0);
+
+            let html = `<table><tr>
+                <th>الترتيب</th><th>اسم الفريق</th><th>النقاط</th>
+                ${currentRound > 1 ? '<th>السابقة</th>' : ''}
+                ${hasFiqh ? '<th>الفقه (كسر)</th>' : ''}
+                ${hasLottery ? '<th>القرعة</th>' : ''}
+                <th>الحالة</th></tr>`;
+            
+            activeTeams.forEach((t, i) => {
+                let status = "متأهل", rowClass = "qualified";
+                if(i >= activeTeams.length - toEliminate) { status = "مقصى"; rowClass = "eliminated"; t.eliminated = true; }
+                if(currentRound === 3) {
+                    status = i === 0 ? "🏆 البطل" : (i === 1 ? "🥈 الوصيف" : "🥉 الثالث");
+                    rowClass = i === 0 ? "qualified" : "";
+                }
+                
+                html += `<tr class="${rowClass}">
+                    <td>${i + 1}</td><td><strong>${t.name}</strong></td>
+                    <td><b style="font-size:1.6rem;">${t.score}</b></td>
+                    ${currentRound > 1 ? `<td>${t.previousScore}</td>` : ''}
+                    ${hasFiqh ? `<td style="color:var(--fiqh-color); font-weight:bold;">${t.tieScore}</td>` : ''}
+                    ${hasLottery ? `<td>${t.lotteryWin > 0 ? '👑 فائز' : '-'}</td>` : ''}
+                    <td>${status}</td></tr>`;
+            });
+            document.getElementById('results-table-container').innerHTML = html + "</table>";
+        }
+
+        // --- كسر التعادل (الفقه) مع فلترة الفرق المتعادلة فقط ---
+        function openTieBreakerMode() {
+            showScreen('tie-breaker-screen');
+            let sel = document.getElementById('tie-breaker-team-select');
+            sel.innerHTML = '';
+            
+            // حساب النقاط الإجمالية لمعرفة من هو المتعادل
+            let scoreCounts = {};
+            activeTeams.forEach(t => {
+                let total = t.score + t.previousScore;
+                scoreCounts[total] = (scoreCounts[total] || 0) + 1;
+            });
+
+            let hasTiedTeams = false;
+            activeTeams.forEach((t, i) => {
+                let total = t.score + t.previousScore;
+                // إذا كان هناك أكثر من فريق بنفس المجموع (أي متعادلين) نظهرهم في القائمة
+                if (scoreCounts[total] > 1) {
+                    sel.innerHTML += `<option value="${i}">${t.name} (أجاب ${t.tieQs}/5)</option>`;
+                    hasTiedTeams = true;
+                }
+            });
+
+            if(!hasTiedTeams) {
+                sel.innerHTML = '<option value="">لا توجد فرق متعادلة حالياً</option>';
+            }
+            
+            updateTieBreakerTeamUI();
+            
+            let grid = document.getElementById('fiqh-grid');
+            grid.innerHTML = '';
+            fiqhQs.forEach(q => {
+                let b = document.createElement('button');
+                b.className = `q-btn fiqh-btn ${q.used ? 'disabled' : ''}`;
+                b.innerText = q.id;
+                b.onclick = () => { if(!q.used) openQuestion(q, true); };
+                grid.appendChild(b);
+            });
+        }
+
+        function updateTieBreakerTeamUI() {
+            let idx = document.getElementById('tie-breaker-team-select').value;
+            let limitMsg = document.getElementById('tie-breaker-limit-msg');
+            let gridWrap = document.getElementById('fiqh-grid-wrapper');
+            
+            if(!idx) {
+                limitMsg.style.display = 'none';
+                gridWrap.style.pointerEvents = 'none';
+                gridWrap.style.opacity = '0.5';
+                return;
+            }
+
+            let team = activeTeams[idx];
+            
+            if(team.tieQs >= 5) {
+                limitMsg.style.display = 'block';
+                gridWrap.style.pointerEvents = 'none';
+                gridWrap.style.opacity = '0.5';
+            } else {
+                limitMsg.style.display = 'none';
+                gridWrap.style.pointerEvents = 'auto';
+                gridWrap.style.opacity = '1';
+            }
+        }
+
+        function scoreTieBreaker(pts) {
+            if(pts === 1) playAudio(); // تشغيل الصوت للإجابة الصحيحة فقط
+            
+            let idx = document.getElementById('tie-breaker-team-select').value;
+            let team = activeTeams[idx];
+            
+            team.tieScore += pts;
+            team.tieQs++;
+            
+            document.getElementById('question-modal').style.display = 'none';
+            openTieBreakerMode(); // تحديث العداد
+        }
+
+        // --- قرعة الحسم (مفلترة للفرق المتعادلة فقط) ---
+        function openLotteryModal() {
+            let container = document.getElementById('lottery-teams-checkboxes');
+            container.innerHTML = '';
+            
+            let scoreCounts = {};
+            activeTeams.forEach(t => {
+                let total = t.score + t.previousScore + t.tieScore; // نضيف كسر التعادل
+                scoreCounts[total] = (scoreCounts[total] || 0) + 1;
+            });
+
+            let hasTiedTeams = false;
+            activeTeams.forEach((t, i) => {
+                let total = t.score + t.previousScore + t.tieScore;
+                if (scoreCounts[total] > 1) {
+                    container.innerHTML += `<label style="display:block; padding:10px; background:#f9f9f9; border-radius:5px; cursor:pointer; font-size:1.2rem; margin-bottom:5px;"><input type="checkbox" value="${i}"> ${t.name}</label>`;
+                    hasTiedTeams = true;
+                }
+            });
+
+            let btn = document.getElementById('lottery-execute-btn');
+            if(!hasTiedTeams) {
+                container.innerHTML = '<p style="color:red; font-weight:bold;">لا توجد فرق متعادلة لإجراء القرعة بينها.</p>';
+                btn.style.display = 'none';
+            } else {
+                btn.style.display = 'inline-block';
+            }
+
+            document.getElementById('lottery-modal').style.display = 'flex';
+        }
+
+        function executeFinalLottery() {
+            let checkboxes = document.querySelectorAll('#lottery-teams-checkboxes input:checked');
+            if(checkboxes.length < 2) return alert("يجب اختيار فريقين على الأقل لإجراء القرعة بينهم!");
+            
+            let selectedIndexes = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            let winnerIndex = selectedIndexes[Math.floor(Math.random() * selectedIndexes.length)];
+            
+            activeTeams[winnerIndex].lotteryWin += 1; 
+            alert(`🎉 الفريق الفائز بالقرعة هو: ${activeTeams[winnerIndex].name} 🎉`);
+            
+            document.getElementById('lottery-modal').style.display = 'none';
+            showResults(); 
+        }
+
+        function startNextRound() {
+            currentRound++;
+            activeTeams = teams.filter(t => !t.eliminated);
+            activeTeams.forEach(t => { 
+                t.previousScore += t.score; 
+                t.qCount = 0; t.score = 0; t.tieScore = 0; t.tieQs = 0; t.lotteryWin = 0;
+            });
+            startGame();
+        }
+
+        // --- دالة تشغيل الصوت ---
+        function playAudio() {
+            let s = document.getElementById('applause-sound');
+            s.currentTime = 0; 
+            s.play().catch(e => console.log("Audio play blocked by browser:", e));
+        }
+    </script>
+</body>
+</html>
